@@ -1,3 +1,8 @@
+#!copyright: https://github.com/anwar-hasaan
+
+# last added feture:
+# added login protection system
+
 from tkinter import Menu, ttk, messagebox
 from encryptor import Encryptor
 from datetime import datetime
