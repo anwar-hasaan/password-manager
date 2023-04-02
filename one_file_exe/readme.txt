@@ -1,0 +1,1 @@
+Feture Not added: import login data from installed chromium based browsers like chrome feture not added at this dist

@@ -587,6 +587,7 @@ class ViewSavedLoginFrame(CTkFrame):
         #check if already exists in this db and filter
         add_list = []
         update_list = []
+        skiped = 0
         try:
             db_data = db.get_all_data()
             if db_data:
@@ -602,32 +603,44 @@ class ViewSavedLoginFrame(CTkFrame):
                             match_found = True
                             break
                         #check if url and username mached but password updated
-                        #(len(j[1]) > 5): check url from db if url len is less than 5, that's a bad url
-                        elif (len(j[1]) > 5) and (i[:-2] == j[1:-2]) and i[2] != j[3]:
-                            i.insert(0, j[0]) #insert the id from db to the update_list data
-                            update_list.append(i)
+                        #(len(j[1]) > 1): check url from db if url len is less than 1, that's a bad url
+                        elif i[:-2] == j[1:-2] and i[2] != j[3]:
+                            if len(i[0]) > 1:
+                                temp = i.copy() #make a copy cause we dont want to affect the orginal i list
+                                temp.insert(0, j[0])
+                                update_list.append(temp)
+                            else: skiped += 1
                             match_found = True
                             break
                     if not match_found:
-                        add_list.append(i)
+                        #skip if url not exists
+                        if len(i[0]) > 1:
+                            add_list.append(i)
+                        else: skiped += 1
             else:
-                add_list = BrowserCredentials
+                add_list = []
+                for data in BrowserCredentials:
+                    if len(data[0]) > 1:
+                        add_list.append(data)
+                    else: skiped += 1
 
             #add to db from browser data
             for data in add_list:
                 db.add(url=data[0], username=data[1], password=data[2], updated_at=data[3])
-                
+
             #update db with browser data
             for data in update_list:
                 db.update(id=data[0], url=data[1], username=data[2], password=data[3], updated_at=data[4])
             
-            if BrowserCredentials and not add_list:
-                app.info_label.configure(text=f'Already imported from {InstalledBrowsers} browsers!')
+            msg = '' if not skiped else f'\n{skiped} skiped because of emptry url'
+            if BrowserCredentials and not add_list and not update_list:
+                app.info_label.configure(text=f'Already imported from {InstalledBrowsers} browsers!' + msg)
             else:
                 self.populate_table()
-                app.info_label.configure(text=f'Added {len(add_list)} and updated {len(update_list)} login info \nfrom {InstalledBrowsers} browsers!')
+                app.info_label.configure(text=f'Added {len(add_list)} and updated {len(update_list)} login info \nfrom {InstalledBrowsers} browsers!' + msg)
         except Exception as e:
             app.info_label.configure(text=f'Something went wrong while importing browsers data!')
+        return None
 
     class CustomTreeView(ttk.Treeview):
         def __init__(self, master, **kwargs):
